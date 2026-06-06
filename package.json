@@ -11,14 +11,16 @@
     "test.unit": "vitest",
     "lint": "eslint",
     "ionic:build": "npm run build",
-    "ionic:serve": "npm run dev -- --open"
+    "ionic:serve": "npm run dev -- --open",
+    "cap:sync": "cap sync && node scripts/fix-spm-paths.mjs",
+    "cap:sync:ios": "cap sync ios && node scripts/fix-spm-paths.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/app-launcher": "^8.0.1",
     "@capacitor/browser": "^8.0.3",
-    "@capacitor/core": "latest",
+    "@capacitor/core": "^8.4.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.4.0",
