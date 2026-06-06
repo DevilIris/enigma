@@ -125,16 +125,13 @@ const AnimeDetailsPage: React.FC = () => {
         return;
       }
       // If the user explicitly picked a source/language, use only that (fast).
-      // Otherwise try the selected source, then reliable fallbacks.
+      // Otherwise try the selected source, then the same reliable fallbacks the
+      // player uses (Anilibria/AnimeSama/… work in-browser; AnimeNana is
+      // Cloudflare-gated and often can't list episodes from a plain browser).
       const order = chosenSource
         ? [chosenSource]
         : Array.from(
-            new Set<MediaSource>([
-              selectedSource,
-              MediaSource.AnimeNana,
-              MediaSource.AnimeWorld,
-              MediaSource.AnimeFLV,
-            ])
+            new Set<MediaSource>([selectedSource, ...PLAY_FALLBACKS])
           ).filter((s) => getSource(s)?.playable);
 
       // AniList's preferred title is often romaji; sources index by English /

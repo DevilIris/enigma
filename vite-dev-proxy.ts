@@ -103,9 +103,19 @@ export function enigmaDevProxy(): Plugin {
 
           res.statusCode = upstream.status;
           if (ct) res.setHeader('Content-Type', ct);
-          for (const h of ['content-length', 'content-range', 'accept-ranges']) {
-            const v = upstream.headers.get(h);
-            if (v) res.setHeader(h, v);
+          // Node's fetch (undici) transparently decompresses gzip/br/deflate, so
+          // the body we pipe is DECOMPRESSED while the upstream Content-Length /
+          // Content-Encoding still describe the compressed bytes. Forwarding the
+          // stale Content-Length makes the client stop reading at the compressed
+          // size — truncating (and corrupting) the response. Only pass length /
+          // range headers through when the upstream wasn't compressed (e.g. video
+          // streams that rely on Range/Content-Range for seeking).
+          const wasCompressed = !!upstream.headers.get('content-encoding');
+          if (!wasCompressed) {
+            for (const h of ['content-length', 'content-range', 'accept-ranges']) {
+              const v = upstream.headers.get(h);
+              if (v) res.setHeader(h, v);
+            }
           }
           if (upstream.body) {
             Readable.fromWeb(upstream.body as Parameters<typeof Readable.fromWeb>[0]).pipe(res);
