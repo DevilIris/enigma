@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Enigma</string>
+    <string name="title_activity_main">Enigma</string>
+    <string name="package_name">ionic.enigma</string>
+    <string name="custom_url_scheme">ionic.enigma</string>
+</resources>
