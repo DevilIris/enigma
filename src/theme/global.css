@@ -1,0 +1,123 @@
+/**
+ * Enigma global styles — app-wide layout helpers and tab-bar styling that
+ * sit on top of the Ionic component CSS.
+ */
+
+ion-tab-bar {
+  --background: var(--ion-tab-bar-background);
+  border-top: 0.5px solid var(--ion-border-color);
+}
+
+ion-tab-button {
+  --color: #8a93a0;
+  --color-selected: var(--enigma-accent);
+}
+
+/* Section headers used by Home carousels and grids */
+.enigma-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 18px 16px 8px;
+}
+
+.enigma-section-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* Horizontal carousel rail */
+.enigma-rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 16px 8px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.enigma-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Poster card — fluid by default (fills a grid cell) */
+.enigma-card {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Inside a horizontal rail, cards take a fixed width */
+.enigma-rail .enigma-card {
+  flex: 0 0 auto;
+  width: 130px;
+  scroll-snap-align: start;
+}
+
+.enigma-card .enigma-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ion-color-step-100);
+  position: relative;
+}
+
+.enigma-card .enigma-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.enigma-card .enigma-card-title {
+  margin: 6px 2px 0;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Favorites / search-result grid */
+.enigma-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 14px;
+  padding: 14px;
+}
+
+/* Empty-state block */
+.enigma-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 48px 24px;
+  color: var(--ion-color-step-600);
+}
+
+.enigma-empty ion-icon {
+  font-size: 56px;
+  opacity: 0.5;
+}
+
+/* Thin progress strip overlaid on poster bottom for continue-watching */
+.enigma-progress-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.enigma-progress-strip > span {
+  display: block;
+  height: 100%;
+  background: var(--enigma-accent);
+}

@@ -1,2 +1,73 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
+/**
+ * Enigma theme
+ * -----------------------------------------------------
+ * Dark-first palette. Accent is "Enigma Teal" (#21C7C7) with a violet
+ * secondary highlight (#7C5CFF). All brand colors are exposed as CSS
+ * variables so they can be retuned in one place.
+ *
+ * Ionic theming reference: https://ionicframework.com/docs/theming
+ */
+
+:root {
+  /* ---- Brand tokens ---- */
+  --enigma-accent: #21c7c7;
+  --enigma-accent-rgb: 33, 199, 199;
+  --enigma-accent-shade: #1daeae;
+  --enigma-accent-tint: #3bcdcd;
+  --enigma-secondary: #7c5cff;
+  --enigma-secondary-rgb: 124, 92, 255;
+
+  /* ---- Ionic primary mapped to the brand accent ---- */
+  --ion-color-primary: var(--enigma-accent);
+  --ion-color-primary-rgb: var(--enigma-accent-rgb);
+  --ion-color-primary-contrast: #00211f;
+  --ion-color-primary-contrast-rgb: 0, 33, 31;
+  --ion-color-primary-shade: var(--enigma-accent-shade);
+  --ion-color-primary-tint: var(--enigma-accent-tint);
+
+  /* ---- Ionic secondary mapped to the violet highlight ---- */
+  --ion-color-secondary: var(--enigma-secondary);
+  --ion-color-secondary-rgb: var(--enigma-secondary-rgb);
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #6d51e0;
+  --ion-color-secondary-tint: #896cff;
+
+  /* Default Ionic font + roundness tweaks */
+  --ion-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+/*
+ * Dark palette. Activated via the `.ion-palette-dark` class on <html>
+ * (we use the class strategy, not the system strategy, so the in-app theme
+ * picker + `syncTheme` setting can toggle it at runtime).
+ */
+:root.ion-palette-dark,
+.ion-palette-dark {
+  --ion-background-color: #0b0e11;
+  --ion-background-color-rgb: 11, 14, 17;
+
+  --ion-text-color: #f2f4f7;
+  --ion-text-color-rgb: 242, 244, 247;
+
+  --ion-toolbar-background: #11151a;
+  --ion-tab-bar-background: #11151a;
+  --ion-item-background: #14181e;
+  --ion-card-background: #14181e;
+  --ion-border-color: #232a33;
+
+  --ion-color-step-50: #14181e;
+  --ion-color-step-100: #1a1f26;
+  --ion-color-step-150: #20262e;
+  --ion-color-step-200: #262d36;
+  --ion-color-step-250: #2c343e;
+  --ion-color-step-300: #323b46;
+  --ion-color-step-350: #38424e;
+  --ion-color-step-400: #3f4956;
+  --ion-color-step-500: #6b7785;
+  --ion-color-step-600: #8a93a0;
+  --ion-color-step-700: #a9b1bc;
+  --ion-color-step-800: #c9cfd7;
+  --ion-color-step-900: #e8ebef;
+}
