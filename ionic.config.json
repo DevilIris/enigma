@@ -1,5 +1,7 @@
 {
-  "name": "enigma",
-  "integrations": {},
+  "name": "Enigma",
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "react-vite"
 }
