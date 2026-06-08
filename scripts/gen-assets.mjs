@@ -134,7 +134,9 @@ if (existsSync(manifestPath)) {
   if (Array.isArray(m.icons)) {
     m.icons = m.icons.map((ic) => ({
       ...ic,
-      src: ic.src.replace(/^(\.\.?\/)?icons\//, '/icons/'),
+      // Relative to the manifest URL so icons resolve under any base path
+      // (root, capacitor://localhost, or the GitHub Pages /enigma/ subpath).
+      src: ic.src.replace(/^(\.{0,2}\/)?icons\//, 'icons/'),
       type: ic.src.endsWith('.webp') ? 'image/webp' : ic.type,
     }));
   }

@@ -45,8 +45,11 @@ import { META_SOURCE } from '../../routes';
 import { buildQueries, pickBestMatch } from '../../utils/titleMatch';
 import EpisodeList from './EpisodeList';
 
-const canScrape = () => isNative() || isProxyConfigured();
 const toAudio = (p: string): AudioChoice => (p === 'Dub' ? 'dub' : p === 'Raw' ? 'raw' : 'sub');
+
+// Sources whose search/stream allow cross-origin requests, so they work in a
+// plain browser (PWA) with no proxy. Anilibria's API + HLS send CORS headers.
+const DIRECT_WEB_SOURCES: MediaSource[] = [MediaSource.Anilibria];
 
 // Fallback sources tried (after the chosen one) when a stream fails to play.
 // Direct-stream sources first — they're far more reliable than embed-host ones.
@@ -120,19 +123,23 @@ const AnimeDetailsPage: React.FC = () => {
     setEpsNote('');
 
     const loadMetaEpisodes = async (a: Anime) => {
-      if (!canScrape()) {
-        setEpsNote('Configure a proxy (Settings → Proxy) or use the native app to load episodes.');
-        return;
-      }
+      // Scrape sources need a working proxy (native, dev /__proxy, or a custom
+      // one). On bare production web only direct-CORS sources work, so filter
+      // the chain down to those rather than failing outright.
+      const proxied = isNative() || isProxyConfigured();
       // If the user explicitly picked a source/language, use only that (fast).
       // Otherwise try the selected source, then the same reliable fallbacks the
-      // player uses (Anilibria/AnimeSama/… work in-browser; AnimeNana is
-      // Cloudflare-gated and often can't list episodes from a plain browser).
-      const order = chosenSource
-        ? [chosenSource]
-        : Array.from(
-            new Set<MediaSource>([selectedSource, ...PLAY_FALLBACKS])
-          ).filter((s) => getSource(s)?.playable);
+      // player uses (Anilibria first — direct HLS, works even in the browser).
+      const requested = chosenSource ? [chosenSource] : [selectedSource, ...PLAY_FALLBACKS];
+      const order = Array.from(new Set<MediaSource>(requested))
+        .filter((s) => getSource(s)?.playable)
+        .filter((s) => proxied || DIRECT_WEB_SOURCES.includes(s));
+      if (!order.length) {
+        setEpsNote(
+          'On the web, this source needs a proxy. Install the app (or set a proxy in Settings → Proxy), or pick Anilibria via the source button.'
+        );
+        return;
+      }
 
       // AniList's preferred title is often romaji; sources index by English /
       // a cleaned name. Try several query variants, then pick the right match.

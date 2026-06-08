@@ -43,7 +43,7 @@ export function pickAnilibriaHls(
 async function getRelease(id: string): Promise<Release> {
   const res = await httpRequest<Release>({
     url: `${API}/anime/releases/${id}`,
-    cors: 'scrape',
+    cors: 'safe',
     responseType: 'json',
   });
   return res.data;
@@ -64,7 +64,7 @@ export const anilibria: Source = {
     const res = await httpRequest<Release[]>({
       url: `${API}/app/search/releases`,
       params: { query },
-      cors: 'scrape',
+      cors: 'safe',
       responseType: 'json',
     });
     return (res.data ?? []).map((r) => ({

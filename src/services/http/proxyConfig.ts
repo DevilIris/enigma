@@ -65,7 +65,15 @@ export function buildProxyUrl(target: string, headers?: Record<string, string>):
   return applyProxy(target, useSettingsStore.getState().settings);
 }
 
-/** Whether scraping/streaming can work on the current web config. */
+/**
+ * Whether a *working* scrape proxy is available on web. The dev server's
+ * /__proxy works, and a user-supplied custom proxy works — but the built-in
+ * default (allorigins) is unreliable/often down, so on production web with no
+ * custom proxy we report false. Direct-CORS sources (e.g. Anilibria) still
+ * work regardless; this only gates the proxy-dependent scraper sources.
+ */
 export function isProxyConfigured(): boolean {
-  return useSettingsStore.getState().settings.proxyEnabled;
+  const s = useSettingsStore.getState().settings;
+  if (!s.proxyEnabled) return false;
+  return isDevServer() || !!s.proxyBaseUrl;
 }

@@ -160,7 +160,9 @@ const App: React.FC = () => {
 
   return (
     <IonApp>
-      <IonReactRouter>
+      {/* basename matches the Vite base so routes work when the app is served
+          from a subpath (e.g. GitHub Pages /enigma/); '' at root for dev/native. */}
+      <IonReactRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         {!ready ? (
           <SplashScreen />
         ) : showOnboarding ? (

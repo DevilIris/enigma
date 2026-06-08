@@ -1,0 +1,59 @@
+name: Deploy PWA to GitHub Pages
+
+# Builds the web app and publishes it to GitHub Pages so it's reachable from
+# anywhere at https://<owner>.github.io/enigma/ . Runs on every push to main.
+#
+# NOTE: this is the bare web PWA. Scraper sources need a proxy (absent here),
+# so only direct-CORS sources (Anilibria) play in the browser; the native app
+# (Appflow) unlocks the rest. Metadata browsing/search works fully.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Pages (enables Pages if needed)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build (subpath base for the project Pages site)
+        run: npm run build
+        env:
+          VITE_BASE: /enigma/
+      - name: SPA fallback (404 -> app) + disable Jekyll
+        run: |
+          cp dist/index.html dist/404.html
+          touch dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
