@@ -31,13 +31,22 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Build web + sync iOS
+      - name: Build web
+        run: npm run build
+      - name: Stage web build into the iOS app
+        # The committed iOS project already has the correct SPM Package.swift +
+        # plugins; we only need the fresh web bundle in App/public. Avoid
+        # `cap sync` (flaky on CI) and copy deterministically.
         run: |
-          npm run build
-          npx cap sync ios
-      - name: Diagnostics (schemes/targets)
+          rm -rf ios/App/App/public
+          mkdir -p ios/App/App/public
+          cp -R dist/. ios/App/App/public/
+          ls ios/App/App/public | head
+      - name: Diagnostics (Xcode + schemes/targets)
         working-directory: ios/App
-        run: xcodebuild -list -project App.xcodeproj || true
+        run: |
+          xcodebuild -version
+          xcodebuild -list -project App.xcodeproj || true
       - name: Build unsigned app (device, no signing)
         working-directory: ios/App
         run: |
