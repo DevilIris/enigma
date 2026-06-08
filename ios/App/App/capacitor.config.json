@@ -1,0 +1,22 @@
+{
+	"appId": "ionic.enigma",
+	"appName": "Enigma",
+	"webDir": "dist",
+	"plugins": {
+		"CapacitorHttp": {
+			"enabled": true
+		}
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"AppLauncherPlugin",
+		"CAPBrowserPlugin",
+		"FilesystemPlugin",
+		"HapticsPlugin",
+		"KeyboardPlugin",
+		"PreferencesPlugin",
+		"ScreenOrientationPlugin",
+		"SharePlugin",
+		"StatusBarPlugin"
+	]
+}

@@ -8,6 +8,7 @@ xcuserdata
 # Cordova plugins for Capacitor
 capacitor-cordova-ios-plugins
 
-# Generated Config files
-App/App/capacitor.config.json
-App/App/config.xml
+# Generated config files (committed so the CI build, which stages assets with a
+# plain copy instead of `cap sync`, finds them — the App target references them).
+# App/App/capacitor.config.json
+# App/App/config.xml
