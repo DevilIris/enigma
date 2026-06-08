@@ -68,14 +68,25 @@ export function parseVidoza(html: string): string | null {
   return m?.[1] ?? null;
 }
 
-/** Streamtape splits its token across two strings assigned to #robotlink. */
+/**
+ * Streamtape splits its token across two strings assigned to #robotlink, and
+ * applies `.substring(n)` calls to the second chunk to strip decoy characters:
+ *   innerHTML = '//streamtape' + ('xcd.com/get_video?id=…&token=…').substring(2).substring(1)
+ * Those substring() calls MUST be applied or the host/token come out malformed
+ * (e.g. `streamtapexcd.com`), which returns a 48-byte error page, not the video.
+ */
 export function parseStreamtape(html: string): string | null {
-  const concat = html.match(
-    /robotlink'\)\.innerHTML\s*=\s*'([^']*)'\s*\+\s*\(?'([^']*)'\)?/i
+  const m = html.match(
+    /robotlink'\)\.innerHTML\s*=\s*'([^']*)'\s*\+\s*\(?\s*'([^']*)'\s*\)?((?:\s*\.substring\(\s*\d+\s*\))*)/i
   );
-  if (concat) {
-    const joined = (concat[1] + concat[2]).replace(/^https?:/, '');
-    return `https:${joined}`;
+  if (m) {
+    let tail = m[2];
+    for (const s of m[3].matchAll(/\.substring\(\s*(\d+)\s*\)/g)) {
+      tail = tail.substring(parseInt(s[1], 10));
+    }
+    let url = (m[1] + tail).replace(/^https?:/, '');
+    if (!url.startsWith('//')) url = `//${url}`;
+    return `https:${url}`;
   }
   const single = html.match(/(\/\/streamtape\.com\/get_video\?[^"'<>\s]+)/i);
   return single ? `https:${single[1]}` : null;

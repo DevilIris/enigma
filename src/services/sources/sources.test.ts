@@ -169,4 +169,12 @@ describe('embed extractors', () => {
       'https://streamtape.com/get_video?id=abc&expires=1&token=xyz&stream=1'
     );
   });
+
+  it('applies Streamtape .substring() decoy stripping', () => {
+    // Real format: the 2nd chunk has decoy chars stripped by .substring() calls.
+    const html = `document.getElementById('robotlink').innerHTML = '//streamtape'+ ('xcd.com/get_video?id=WQ&expires=2&ip=Z&token=rS3').substring(2).substring(1);`;
+    expect(parseStreamtape(html)).toBe(
+      'https://streamtape.com/get_video?id=WQ&expires=2&ip=Z&token=rS3'
+    );
+  });
 });
