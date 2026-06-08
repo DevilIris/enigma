@@ -266,9 +266,14 @@ const AnimeDetailsPage: React.FC = () => {
   /** Build the ordered list of source attempts for an episode. */
   const buildCandidates = (ep: Episode): StreamCandidate[] => {
     const queryAnime: Anime = anime ?? ({ id, title, source: source as MediaSource } as Anime);
-    const order = Array.from(
-      new Set<MediaSource>([playbackSource as MediaSource, ...PLAY_FALLBACKS])
-    ).filter((s) => getSource(s)?.playable);
+    // If the user explicitly picked a source/language (e.g. AnimeFLV in Spanish),
+    // honour ONLY that — don't silently fall back to another language (Anilibria
+    // is Russian). Otherwise use the reliability fallback chain.
+    const order = chosenSource
+      ? [chosenSource]
+      : Array.from(
+          new Set<MediaSource>([playbackSource as MediaSource, ...PLAY_FALLBACKS])
+        ).filter((s) => getSource(s)?.playable);
 
     return order.map((sid) => ({
       source: sid,

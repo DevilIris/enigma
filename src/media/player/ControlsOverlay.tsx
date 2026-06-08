@@ -103,6 +103,12 @@ const ControlsOverlay: React.FC<ControlsOverlayProps> = (p) => {
         e.stopPropagation();
         p.onInteract();
       }}
+      // Keep control taps/drags (buttons, seek slider) from reaching the stage's
+      // hold-to-speed + tap-to-toggle handlers, which made the controls feel
+      // janky/unresponsive and triggered accidental speed changes while seeking.
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
     >
       {/* Top bar */}
       <div className="enigma-controls-top">
