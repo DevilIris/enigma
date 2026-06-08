@@ -47,15 +47,18 @@ jobs:
         run: |
           xcodebuild -version
           xcodebuild -list -project App.xcodeproj || true
+      - name: Resolve Swift packages
+        working-directory: ios/App
+        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
       - name: Build unsigned app (device, no signing)
         working-directory: ios/App
         run: |
           set -o pipefail
           xcodebuild \
             -project App.xcodeproj \
-            -target App \
+            -scheme App \
             -configuration Release \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
