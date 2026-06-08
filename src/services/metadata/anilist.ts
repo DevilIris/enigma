@@ -6,6 +6,13 @@ import { stripHtml, currentSeason } from '../../utils/format';
 
 const ENDPOINT = 'https://graphql.anilist.co';
 
+export interface AniListReview {
+  summary: string;
+  score?: number; // reviewer's 0-100 score
+  rating?: number; // community upvotes
+  user: string;
+}
+
 /* ---- Raw AniList shapes (only the fields we read) ---- */
 interface AniListTitle {
   romaji?: string;
@@ -187,6 +194,34 @@ export const aniList = {
       { id }
     );
     return mapMedia(data.Media);
+  },
+
+  /** Community reviews for a title (best-effort; empty on error). */
+  async getReviews(id: number): Promise<AniListReview[]> {
+    try {
+      const data = await query<{
+        Media: { reviews?: { nodes?: { summary?: string | null; score?: number | null; rating?: number | null; user?: { name?: string } | null }[] } };
+      }>(
+        `query ($id: Int) {
+          Media(id: $id, type: ANIME) {
+            reviews(sort: RATING_DESC, perPage: 8) {
+              nodes { summary score rating user { name } }
+            }
+          }
+        }`,
+        { id }
+      );
+      return (data.Media?.reviews?.nodes ?? [])
+        .map((r) => ({
+          summary: (r.summary ?? '').trim(),
+          score: r.score ?? undefined,
+          rating: r.rating ?? undefined,
+          user: r.user?.name ?? 'Anonymous',
+        }))
+        .filter((r) => r.summary);
+    } catch {
+      return [];
+    }
   },
 
   /** Authenticated: the logged-in user (null if not logged in / token invalid). */

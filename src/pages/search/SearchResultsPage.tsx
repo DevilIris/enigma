@@ -19,6 +19,7 @@ import { useTabBasePath } from '../../hooks/useTabBasePath';
 import { useSettingsStore } from '../../stores';
 import { metadataProvider } from '../../services/metadata';
 import { getSource } from '../../services/sources';
+import { animeNanaBrowse, animeNanaTrending } from '../../services/sources/animenana';
 import { isNative } from '../../services/platform';
 import { isProxyConfigured } from '../../services/http/proxyConfig';
 import { SOURCE_META } from '../../models';
@@ -37,7 +38,11 @@ const SearchResultsPage: React.FC = () => {
   const location = useLocation();
   const service = useSettingsStore((s) => s.settings.selectedAnimeListingService);
   const selectedSource = useSettingsStore((s) => s.settings.selectedMediaSource);
-  const query = new URLSearchParams(location.search).get('q') ?? '';
+  const params = new URLSearchParams(location.search);
+  const query = params.get('q') ?? '';
+  const genre = params.get('genre') ?? '';
+  const trending = params.get('trending') === '1';
+  const heading = trending ? 'Trending' : genre || query;
 
   const [results, setResults] = useState<ResultCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +53,17 @@ const SearchResultsPage: React.FC = () => {
     setLoading(true);
 
     const run = async (): Promise<ResultCard[]> => {
+      // AnimeNana discovery: browse by genre / trending (scraped from AnimeNana).
+      if (trending || genre) {
+        setVia(trending ? 'AnimeNana · Trending' : `AnimeNana · ${genre}`);
+        const r = trending ? await animeNanaTrending() : await animeNanaBrowse([genre]);
+        return r.map((x) => ({
+          key: x.href,
+          title: x.title,
+          coverUrl: x.coverUrl,
+          to: routes.anime(base, x.source, x.href),
+        }));
+      }
       const src = getSource(selectedSource);
       const useSource = (isNative() || isProxyConfigured()) && src?.playable;
       if (useSource && src) {
@@ -78,7 +94,7 @@ const SearchResultsPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [query, service, selectedSource, base]);
+  }, [query, genre, trending, service, selectedSource, base]);
 
   return (
     <IonPage>
@@ -87,7 +103,7 @@ const SearchResultsPage: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref={routes.search} />
           </IonButtons>
-          <IonTitle>{query}</IonTitle>
+          <IonTitle>{heading}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -108,7 +124,7 @@ const SearchResultsPage: React.FC = () => {
             ))}
           </div>
         ) : results.length === 0 ? (
-          <EmptyState icon={searchOutline} title="No results" message={`Nothing found for “${query}”.`} />
+          <EmptyState icon={searchOutline} title="No results" message={`Nothing found for “${heading}”.`} />
         ) : (
           <div className="enigma-grid">
             {results.map((r) => (

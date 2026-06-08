@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -15,11 +16,13 @@ import {
   IonToolbar,
   useIonRouter,
 } from '@ionic/react';
-import { timeOutline, closeOutline } from 'ionicons/icons';
+import { timeOutline, closeOutline, flameOutline, searchOutline } from 'ionicons/icons';
 import GearButton from '../../components/common/GearButton';
 import EmptyState from '../../components/common/EmptyState';
-import { searchOutline } from 'ionicons/icons';
 import { useSearchHistoryStore, useSettingsStore } from '../../stores';
+import { isNative } from '../../services/platform';
+import { isProxyConfigured } from '../../services/http/proxyConfig';
+import { animeNanaGenres, ANIMENANA_GENRES } from '../../services/sources/animenana';
 import { routes } from '../../routes';
 
 const SearchPage: React.FC = () => {
@@ -31,12 +34,27 @@ const SearchPage: React.FC = () => {
   const clearHistory = useSearchHistoryStore((s) => s.clear);
   const source = useSettingsStore((s) => s.settings.selectedMediaSource);
 
+  // Discovery (browse by genre / trending) is scraped from AnimeNana, so it
+  // only works where scraping does: native, the dev /__proxy, or a user proxy.
+  const canBrowse = isNative() || isProxyConfigured();
+  const [genres, setGenres] = useState<string[]>(ANIMENANA_GENRES);
+  useEffect(() => {
+    if (!canBrowse) return;
+    let cancelled = false;
+    animeNanaGenres().then((g) => !cancelled && g.length && setGenres(g));
+    return () => {
+      cancelled = true;
+    };
+  }, [canBrowse]);
+
   const submit = (query: string) => {
     const q = query.trim();
     if (!q) return;
     pushHistory(q, source);
     router.push(`${routes.searchResults}?q=${encodeURIComponent(q)}`, 'forward', 'push');
   };
+  const browse = (params: string) =>
+    router.push(`${routes.searchResults}?${params}`, 'forward', 'push');
 
   return (
     <IonPage>
@@ -58,12 +76,32 @@ const SearchPage: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
+        {canBrowse && (
+          <>
+            <IonListHeader>
+              <IonLabel>Browse</IonLabel>
+            </IonListHeader>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 12px 12px' }}>
+              <IonChip color="primary" onClick={() => browse('trending=1')}>
+                <IonIcon icon={flameOutline} />
+                <IonLabel>Trending</IonLabel>
+              </IonChip>
+              {genres.map((g) => (
+                <IonChip key={g} outline onClick={() => browse(`genre=${encodeURIComponent(g)}`)}>
+                  <IonLabel>{g}</IonLabel>
+                </IonChip>
+              ))}
+            </div>
+          </>
+        )}
         {history.length === 0 ? (
-          <EmptyState
-            icon={searchOutline}
-            title="Search for anime"
-            message="Your recent searches will appear here."
-          />
+          !canBrowse && (
+            <EmptyState
+              icon={searchOutline}
+              title="Search for anime"
+              message="Your recent searches will appear here."
+            />
+          )
         ) : (
           <IonList>
             <IonListHeader>

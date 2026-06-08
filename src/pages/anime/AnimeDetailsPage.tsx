@@ -27,7 +27,7 @@ import {
   type AudioChoice,
   type Episode,
 } from '../../models';
-import { aniList } from '../../services/metadata/anilist';
+import { aniList, type AniListReview } from '../../services/metadata/anilist';
 import { jikan } from '../../services/metadata/jikan';
 import { kitsu } from '../../services/metadata/kitsu';
 import { getSource, implementedSources } from '../../services/sources';
@@ -82,6 +82,7 @@ const AnimeDetailsPage: React.FC = () => {
   const [coverUrl, setCoverUrl] = useState<string | undefined>();
   const [synopsis, setSynopsis] = useState<string | undefined>();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [reviews, setReviews] = useState<AniListReview[]>([]);
   const [playbackSource, setPlaybackSource] = useState<MediaSource | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingEps, setLoadingEps] = useState(false);
@@ -119,6 +120,7 @@ const AnimeDetailsPage: React.FC = () => {
     setLoading(true);
     setAnime(null);
     setEpisodes([]);
+    setReviews([]);
     setPlaybackSource(null);
     setEpsNote('');
 
@@ -195,6 +197,12 @@ const AnimeDetailsPage: React.FC = () => {
           setCoverUrl(a.coverUrl);
           setSynopsis(a.synopsis);
           setLoading(false);
+          // AniList community reviews (non-blocking; AniList service only).
+          if (service === AnimeListingService.AniList) {
+            void aniList.getReviews(Number(id)).then((r) => {
+              if (!cancelled) setReviews(r);
+            });
+          }
           await loadMetaEpisodes(a);
         } else {
           const src = getSource(source as MediaSource);
@@ -432,6 +440,34 @@ const AnimeDetailsPage: React.FC = () => {
                   {epsNote || 'No episodes available.'}
                 </IonNote>
               )
+            )}
+
+            {reviews.length > 0 && (
+              <>
+                <div className="enigma-section-header">
+                  <h2>Reviews</h2>
+                </div>
+                {reviews.map((r, i) => (
+                  <div
+                    key={i}
+                    style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.8rem',
+                        opacity: 0.65,
+                        marginBottom: 4,
+                      }}
+                    >
+                      <span>{r.user}</span>
+                      {r.score != null && <span>★ {r.score}/100</span>}
+                    </div>
+                    <p style={{ margin: 0, lineHeight: 1.45, fontSize: '0.9rem' }}>{r.summary}</p>
+                  </div>
+                ))}
+              </>
             )}
             <div style={{ height: 24 }} />
           </>

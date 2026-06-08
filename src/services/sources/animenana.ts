@@ -47,6 +47,68 @@ export function parseAnimeNanaEpisodes(html: string): Episode[] {
   return out;
 }
 
+/** AnimeNana's genre list (scraped from /animelist/; fallback when offline). */
+export const ANIMENANA_GENRES = [
+  'Action', 'Adventure', 'Chinese', 'Comedy', 'Detective', 'Drama', 'Ecchi',
+  'Fantasy', 'Gourmet', 'Harem', 'High Stakes Game', 'Historical', 'Horror',
+  'Isekai', 'Iyashikei', 'Josei', 'Kids', 'Magic', 'Martial Arts', 'Mecha',
+  'Military', 'Music', 'Mystery', 'Mythology', 'Parody', 'Psychological',
+  'Racing', 'Reincarnation', 'Romance', 'Samurai', 'School', 'Sci-Fi', 'Seinen',
+  'Shoujo', 'Shoujo Ai', 'Shounen', 'Shounen Ai', 'Slice of Life', 'Space',
+  'Sports', 'Strategy Game', 'Super Power', 'Supernatural', 'Survival',
+  'Suspense', 'Team Sports', 'Time Travel', 'Vampire', 'Video Game',
+];
+
+/** Lenient card parser for browse/trending pages (any `/animeserie/` link). */
+export function parseAnimeNanaCards(html: string): SearchResult[] {
+  const root = parseHtml(html);
+  const out: SearchResult[] = [];
+  const seen = new Set<string>();
+  for (const a of root.querySelectorAll('a')) {
+    const raw = attr(a, 'href');
+    if (!raw || !raw.includes('/animeserie/')) continue;
+    const href = absUrl(raw, BASE);
+    if (seen.has(href)) continue;
+    const title = text(a.querySelector('.animename')) || attr(a.querySelector('img'), 'alt');
+    if (!title) continue;
+    const posterEl = a.querySelector('img');
+    const cover = attr(posterEl, 'data-src') || imgSrc(posterEl);
+    seen.add(href);
+    out.push({ id: href, title, coverUrl: cover ? absUrl(cover, BASE) : undefined, href, source: MediaSource.AnimeNana });
+  }
+  return out;
+}
+
+/** Scrape the live genre list from /animelist/ (falls back to the static list). */
+export async function animeNanaGenres(): Promise<string[]> {
+  try {
+    const res = await httpRequest<string>({ url: `${BASE}/animelist/`, cors: 'scrape', responseType: 'text', headers: { 'User-Agent': UA } });
+    const block = res.data.match(/<select[^>]*name="genres\[\]"[\s\S]*?<\/select>/i)?.[0] ?? '';
+    const genres = Array.from(block.matchAll(/<option[^>]*>([^<]+)<\/option>/g)).map((m) => m[1].trim()).filter(Boolean);
+    return genres.length ? genres : ANIMENANA_GENRES;
+  } catch {
+    return ANIMENANA_GENRES;
+  }
+}
+
+/** Browse anime by genre(s) via /animelist/?genres[]=… */
+export async function animeNanaBrowse(genres: string[] = []): Promise<SearchResult[]> {
+  const qs = genres.map((g) => `genres[]=${encodeURIComponent(g)}`).join('&');
+  const res = await httpRequest<string>({
+    url: `${BASE}/animelist/${qs ? `?${qs}` : ''}`,
+    cors: 'scrape',
+    responseType: 'text',
+    headers: { 'User-Agent': UA },
+  });
+  return parseAnimeNanaCards(res.data);
+}
+
+/** Trending/most-popular anime (the /animelist/popular listing). */
+export async function animeNanaTrending(): Promise<SearchResult[]> {
+  const res = await httpRequest<string>({ url: `${BASE}/animelist/popular`, cors: 'scrape', responseType: 'text', headers: { 'User-Agent': UA } });
+  return parseAnimeNanaCards(res.data);
+}
+
 export const animenana: Source = {
   id: MediaSource.AnimeNana,
   playable: true,
