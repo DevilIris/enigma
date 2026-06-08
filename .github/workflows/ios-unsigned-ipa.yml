@@ -1,0 +1,70 @@
+name: Build unsigned iOS .ipa (sideload)
+
+# Builds the Capacitor iOS app UNSIGNED on a macOS runner and uploads an .ipa
+# artifact. You then install it on a USB-connected iPhone with Sideloadly
+# (free) signed by your FREE Apple ID — no paid Apple Developer account.
+# See SIDELOAD.md. Re-sign every ~7 days (free-account limit).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'ios/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.ts'
+      - 'vite.config.ts'
+      - 'vite-dev-proxy.ts'
+      - '.github/workflows/ios-unsigned-ipa.yml'
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build web + sync iOS
+        run: |
+          npm run build
+          npx cap sync ios
+      - name: Diagnostics (schemes/targets)
+        working-directory: ios/App
+        run: xcodebuild -list -project App.xcodeproj || true
+      - name: Build unsigned app (device, no signing)
+        working-directory: ios/App
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project App.xcodeproj \
+            -target App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
+      - name: Package unsigned .ipa
+        working-directory: ios/App
+        run: |
+          APP=$(find build/Build/Products -maxdepth 2 -name "App.app" -type d | head -n1)
+          echo "Found app bundle: $APP"
+          test -n "$APP" || { echo "App.app not produced"; find build -name "*.app"; exit 1; }
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry Enigma-unsigned.ipa Payload
+          ls -la Enigma-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Enigma-unsigned-ipa
+          path: ios/App/Enigma-unsigned.ipa
+          if-no-files-found: error
