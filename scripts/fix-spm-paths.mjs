@@ -27,16 +27,29 @@ try {
   process.exit(0);
 }
 
-// Only touch backslashes inside lines that reference node_modules paths, so we
-// never disturb anything else in the manifest.
-const fixed = src
+// Capacitor native runtime pin. The capacitor-swift-pm 8.4.0 prebuilt
+// xcframework dropped the older iOS API (color(fromHex:), PluginConfig.getString,
+// CAPBridgeProtocol.webView/viewController) that the installed plugins
+// (@capacitor/status-bar 8.0.2, screen-orientation 8.0.1, browser, etc.) still
+// call, so the app won't compile against 8.4.0. 8.1.0's xcframework still has
+// that API (verified), so pin to it. `cap sync` rewrites this to match the
+// @capacitor/ios version (8.4.0), which re-breaks the build — so re-pin here.
+const SWIFT_PM_PIN = '8.1.0';
+
+let fixed = src
+  // POSIX-ify Windows backslash node_modules paths.
   .split('\n')
   .map((line) => (line.includes('node_modules') ? line.replace(/\\/g, '/') : line))
-  .join('\n');
+  .join('\n')
+  // Force the capacitor-swift-pm version back to the compatible pin.
+  .replace(
+    /(capacitor-swift-pm\.git",\s*exact:\s*")[^"]+(")/,
+    `$1${SWIFT_PM_PIN}$2`
+  );
 
 if (fixed !== src) {
   writeFileSync(manifest, fixed);
-  console.log('[fix-spm-paths] rewrote Windows backslash paths to POSIX in Package.swift');
+  console.log(`[fix-spm-paths] normalised Package.swift (POSIX paths + capacitor-swift-pm ${SWIFT_PM_PIN})`);
 } else {
-  console.log('[fix-spm-paths] Package.swift already POSIX — no change.');
+  console.log(`[fix-spm-paths] Package.swift already POSIX + pinned to ${SWIFT_PM_PIN} — no change.`);
 }
